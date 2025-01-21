@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="movieRentalApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Rental Store</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f1f8ff;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
+
+    .card {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .filters {
+      background-color: #ecf0f1;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .table th, .table td {
+      vertical-align: middle;
+    }
+
+    .table-dark {
+      background-color: #34495e;
+      color: white;
+    }
+
+    .table-striped tbody tr:nth-child(odd) {
+      background-color: #f7f9f9;
+    }
+
+    .btn-primary {
+      background-color: #8e44ad;
+      border-color: #8e44ad;
+    }
+
+    .btn-primary:hover {
+      background-color: #732d91;
+      border-color: #732d91;
+    }
+
+    .error {
+      color: #e74c3c;
+      margin-top: 10px;
+    }
+
+    .card-body h5 {
+      color: #2980b9;
+    }
+
+    .card-body p {
+      color: #16a085;
+    }
+
+    .form-control, .form-select {
+      border-color: #3498db;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #2980b9;
+      box-shadow: 0 0 8px rgba(41, 128, 185, 0.5);
+    }
+  </style>
+</head>
+<body ng-controller="MovieController">
+
+  <h1 class="text-primary">Movie Rental Store</h1>
+
+  <div class="container">
+    <!-- Filters -->
+    <div class="filters">
+      <h5 class="text-secondary">Filter Movies</h5>
+      <form class="row g-3">
+        <div class="col-md-6">
+          <label for="genre" class="form-label">Filter by Genre:</label>
+          <select id="genre" class="form-select" ng-model="selectedGenre" ng-options="genre for genre in genres">
+            <option value="">All Genres</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="year" class="form-label">Filter by Release Year:</label>
+          <select id="year" class="form-select" ng-model="selectedYear" ng-options="year for year in years">
+            <option value="">All Years</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Movie Table -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5>Movies List</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Release Year</th>
+                <th>Rental Price ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="movie in filteredMovies = (movies | filter: { genre: selectedGenre, year: selectedYear })">
+                <td>{{ movie.title }}</td>
+                <td>{{ movie.genre }}</td>
+                <td>{{ movie.year }}</td>
+                <td>{{ calculateRentalPrice(movie.year) }}</td>
+              </tr>
+              <tr ng-if="filteredMovies.length === 0">
+                <td colspan="4" class="text-center text-muted">No movies found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add New Movie -->
+    <div class="card">
+      <div class="card-body">
+        <h5>Add a New Movie</h5>
+        <form class="row g-3" ng-submit="addMovie()">
+          <div class="col-md-4">
+            <input type="text" class="form-control" ng-model="newMovie.title" placeholder="Title" required />
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" ng-model="newMovie.genre" placeholder="Genre" required />
+          </div>
+          <div class="col-md-4">
+            <input type="number" class="form-control" ng-model="newMovie.year" placeholder="Year" required />
+          </div>
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-primary w-100">Add Movie</button>
+          </div>
+        </form>
+        <p class="error" ng-if="errorMessage">{{ errorMessage }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    angular.module('movieRentalApp', [])
+      .controller('MovieController', ['$scope', 'RentalService', function ($scope, RentalService) {
+        // Movie dataset
+        $scope.movies = [
+          { title: 'Inception', genre: 'Sci-Fi', year: 2010 },
+          { title: 'Parasite', genre: 'Drama', year: 2019 },
+          { title: 'The Dark Knight', genre: 'Action', year: 2008 },
+          { title: 'Avengers: Endgame', genre: 'Action', year: 2019 },
+          { title: 'Interstellar', genre: 'Sci-Fi', year: 2014 }
+        ];
+
+        $scope.genres = [...new Set($scope.movies.map(movie => movie.genre))];
+        $scope.years = [...new Set($scope.movies.map(movie => movie.year))];
+
+        $scope.calculateRentalPrice = function (year) {
+          return RentalService.getRentalPrice(year);
+        };
+
+        // Add a new movie
+        $scope.newMovie = {};
+        $scope.errorMessage = '';
+        $scope.addMovie = function () {
+          const isTitleUnique = !$scope.movies.some(movie => movie.title === $scope.newMovie.title);
+          if (!isTitleUnique) {
+            $scope.errorMessage = 'Movie title must be unique.';
+            return;
+          }
+          $scope.movies.push({
+            title: $scope.newMovie.title,
+            genre: $scope.newMovie.genre,
+            year: $scope.newMovie.year
+          });
+          $scope.genres = [...new Set($scope.movies.map(movie => movie.genre))];
+          $scope.years = [...new Set($scope.movies.map(movie => movie.year))];
+          $scope.newMovie = {};
+          $scope.errorMessage = '';
+        };
+      }])
+
+      .service('RentalService', function () {
+        this.getRentalPrice = function (year) {
+          const currentYear = new Date().getFullYear();
+          return currentYear - year <= 3 ? 5 : 3;
+        };
+      });
+  </script>
+</body>
+</html>
