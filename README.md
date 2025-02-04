@@ -7,4 +7,4 @@
 #### Part 2: Personal Finance Tracker: https://raviteja-2004.github.io/Web_Technology_2025/Personal_Finance_Tracker.html
 
 # Lab Assignemt 2.2
-#### Student Management System:
+#### Student Management System: https://raviteja-2004.github.io/Web_Technology_2025/
